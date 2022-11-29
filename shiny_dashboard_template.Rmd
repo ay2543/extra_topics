@@ -9,13 +9,51 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
+library(plotly)
+library(p8105.datasets)
+library(tidyverse)
+library(shiny)
+
+
+data(nyc_airbnb)
+
+
+nyc_airbnb = 
+  nyc_airbnb %>% 
+  mutate(stars = review_scores_location/2) %>% 
+  rename(borough = neighbourhood_group) %>% 
+  select(borough, neighbourhood, stars, price, room_type, lat, long) %>% 
+  drop_na(stars)
 ```
 
 Column {.sidebar}
 -----------------------------------------------------------------------
 
 ```{r}
+boroughs = nyc_airbnb %>% distinct(borough) %>% pull()
 
+selectInput(
+  inputId = "borough_choice",
+  label = h3("Borough Choice"), #h3: header size 3
+  choices = boroughs
+) # creates a list called input, one of the things in the input is borough choice - should check your input
+
+
+sliderInput(
+  inputId = "price_range",
+  label = h3("Price Range"),
+  min = 50, max = 1000, value = c(100, 250) # if value only has 1 number, slide from min to selected value
+)
+
+
+room_types = nyc_airbnb %>% distinct(room_type) %>% pull()
+
+radioButtons(
+  inputId = "room_choice",
+  label = h3("Room Type"),
+  choices = room_types,
+  selected = "Entire home/apt"
+)
 ```
 
 Column {data-width=650}
@@ -24,6 +62,19 @@ Column {data-width=650}
 ### Chart A
 
 ```{r}
+# renderPrint({
+#   input[["borough_choice"]]
+# })
+
+renderPlotly(
+nyc_airbnb %>%
+  filter(borough == input[["borough_choice"]],
+         room_type == input[["room_choice"]],
+         price >= input[["price_range"]][1],
+         price <= input[["price_range"]][2]) %>%
+  plot_ly(x = ~lat, y = ~long, color = ~price,
+          type = "scatter", mode = "markers", alpha = 0.5)
+)
 
 ```
 
@@ -34,11 +85,21 @@ Column {data-width=350}
 
 ```{r}
 
+renderPlotly(
+  nyc_airbnb %>% 
+    count(neighbourhood) %>% 
+    mutate(neighbourhood = fct_reorder(neighbourhood, n)) %>% 
+    filter(borough = input[["borough_choice"]],
+           room_type == input[["room_choice"]]) %>% 
+    plot_ly(x = ~neighbourhood, y = ~n, color = ~neighbourhood, type = "bar")
+)
 ```
 
 ### Chart C
 
 ```{r}
-
+renderPrint({
+  input[["room_choice"]]
+})
 ```
 
