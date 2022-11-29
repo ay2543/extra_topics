@@ -87,10 +87,10 @@ Column {data-width=350}
 
 renderPlotly(
   nyc_airbnb %>% 
-    count(neighbourhood) %>% 
-    mutate(neighbourhood = fct_reorder(neighbourhood, n)) %>% 
     filter(borough = input[["borough_choice"]],
            room_type == input[["room_choice"]]) %>% 
+    count(neighbourhood) %>% 
+    mutate(neighbourhood = fct_reorder(neighbourhood, n)) %>% 
     plot_ly(x = ~neighbourhood, y = ~n, color = ~neighbourhood, type = "bar")
 )
 ```
